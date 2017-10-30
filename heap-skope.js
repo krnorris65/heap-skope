@@ -32,27 +32,25 @@ Hëap-skopes workshops can process 5 kilograms of a mineral with each work order
         Subtract 5 from the total kilograms available in the gem mine, but make sure you stop when there are no minerals left.
         */
         
-            let remainingGems = GemMine[requestedMineral].kilograms
+            let gemAmount = 0
             
-            while (remainingGems > 0) {
-                //if the remaingGems is greater or equal to 5 then process returns an amount of 5
-                if ( remainingGems >= 5) {
-                    
-                    remainingGems -= 5 //after you return the amount, then subtract 5 from from the remaining number
+            //if the remaingGems is greater or equal to 5 then process returns an amount of 5
+                if (GemMine[requestedMineral].kilograms >= 5) {
+                    gemAmount = 5
+                
+                } else {
+                    gemAmount = GemMine[requestedMineral].kilograms
 
-                    return {
-                    "mineral": requestedMineral,
-                    "amount": 5
-                    }
-                    
-                } 
-
-                return {
-                "mineral": requestedMineral,
-                "amount":  remainingGems
                 }
 
-            }     
+                GemMine[requestedMineral].kilograms -= gemAmount
+
+
+                return {
+                    "mineral": requestedMineral,
+                    "amount":  gemAmount
+                }
+
         }
     }
 }
@@ -65,34 +63,63 @@ const SkopeManager = gemHeapSkope()
 /*
 Process the gems in any order you like until there none left in the gem mine.
 */
+    const processedOnyx = []
+    const processedAmethyst = []
+    const processedBloodstone = []
+    const processedEmerald = []
 
-console.log(SkopeManager.process("Amethyst"))
-    // do {
-    //     SkopeManager.process("Amethyst")
+    let mineralProcessing = null
+    //process Onyx
+    do {
+        mineralProcessing = SkopeManager.process("Onyx")
+        processedOnyx.push(mineralProcessing)
+    } while (mineralProcessing.amount === 5)
     
-    // } while (SkopeManager.process("Amethyst") > 0)
+    //process Amethyst
+    do {
+        mineralProcessing = SkopeManager.process("Amethyst")
+        processedAmethyst.push(mineralProcessing)
+    } while (mineralProcessing.amount === 5)
+    
+    //process Bloodstone
+    do {
+        mineralProcessing = SkopeManager.process("Bloodstone")
+        processedBloodstone.push(mineralProcessing)
+    } while (mineralProcessing.amount === 5)
+    
+    //process Emerald
+    do {
+        mineralProcessing = SkopeManager.process("Emerald")
+        processedEmerald.push(mineralProcessing)
+    } while (mineralProcessing.amount === 5)
+
+
+console.log("Onyx", processedOnyx)
+console.log("Amethyst", processedAmethyst)
+console.log("Bloodstone", processedBloodstone)
+console.log("Emerald", processedEmerald)
 
 
 // /*
 // Create a generator for 30 storage containers, which is how many a hëap-skope is equipped with.
 // */
-//     const gemContainerGenerator = function* () {
-//         let currentContainer = 1
-//         const maximumContainers = 30
+    const gemContainerGenerator = function* () {
+        let currentContainer = 1
+        const maximumContainers = 30
 
-//         while (currentContainer <= maximumContainers) {
-//             yield { "id": currentContainer, "type": "Mineral", "orders": [] }
-//             currentContainer++
-//         }
-//     }
-//     //instance of gem container generator
-//     const gemContainerFactory = gemContainerGenerator()
+        while (currentContainer <= maximumContainers) {
+            yield { "id": currentContainer, "type": "Mineral", "orders": [] }
+            currentContainer++
+        }
+    }
+    //instance of gem container generator
+    const gemContainerFactory = gemContainerGenerator()
 
 // /*
 // Place the gems in the storage containers, making sure that once a container has 565 kilograms of gems, you move to the next one.
 // */
-//     //holds all the seperate gem containers
-//     const gemContainers = []
+    //holds all the seperate gem containers
+    const gemContainers = []
     
-//     //current container
-//     const currentContainer = gemContainerFactory.next().value
+    //current container
+    const currentContainer = gemContainerFactory.next().value
