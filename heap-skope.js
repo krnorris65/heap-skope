@@ -26,33 +26,37 @@ We're exposing the functionality of this skope to code in the outer scope, so th
 
 Hëap-skopes workshops can process 5 kilograms of a mineral with each work order. So every time the `process` function is invoked, subtract 5 from the amount of the requested mineral from the enclosed GemMine above.
 */
-    return {
-        "process": function (requestedMineral) {
-        /*
-        Subtract 5 from the total kilograms available in the gem mine, but make sure you stop when there are no minerals left.
-        */
-        
-            let gemAmount = 0
-            
-            //if the remaingGems is greater or equal to 5 then process returns an amount of 5
-                if (GemMine[requestedMineral].kilograms >= 5) {
-                    gemAmount = 5
+    return Object.create (null, {
+        "products": {
+            get: () => Object.keys(GemMine) //allows user to get the names of the gems
+        },
+        "process": {
+            value: function (requestedMineral) {
+                /*
+                Subtract 5 from the total kilograms available in the gem mine, but make sure you stop when there are no minerals left.
+                */
+                let gemAmount = 0 //starting amount of gems before a mineral is processed
                 
-                } else {
-                    gemAmount = GemMine[requestedMineral].kilograms
+                //if the amount of gems is greater or equal to 5, then the gemAmount is 5
+                    if (GemMine[requestedMineral].kilograms >= 5) {
+                        gemAmount = 5
+                    
+                    } else { //if less than 5, then it is the remaining number
+                        gemAmount = GemMine[requestedMineral].kilograms
 
-                }
+                    }
 
-                GemMine[requestedMineral].kilograms -= gemAmount
+                    GemMine[requestedMineral].kilograms -= gemAmount //subtract the gemAmount from the total amount of gems, eventually the number will equal 0
 
 
-                return {
-                    "mineral": requestedMineral,
-                    "amount":  gemAmount
-                }
+                    return {
+                        "mineral": requestedMineral,
+                        "amount":  gemAmount
+                    }
 
+            }
         }
-    }
+    })
 }
 
 /*
@@ -63,53 +67,30 @@ const SkopeManager = gemHeapSkope()
 /*
 Process the gems in any order you like until there none left in the gem mine.
 */
-    const processedOnyx = []
-    const processedAmethyst = []
-    const processedBloodstone = []
-    const processedEmerald = []
+    const processedGems = []
 
-    let mineralProcessing = null
-    //process Onyx
-    do {
-        mineralProcessing = SkopeManager.process("Onyx")
-        processedOnyx.push(mineralProcessing)
-    } while (mineralProcessing.amount === 5)
-    
-    //process Amethyst
-    do {
-        mineralProcessing = SkopeManager.process("Amethyst")
-        processedAmethyst.push(mineralProcessing)
-    } while (mineralProcessing.amount === 5)
-    
-    //process Bloodstone
-    do {
-        mineralProcessing = SkopeManager.process("Bloodstone")
-        processedBloodstone.push(mineralProcessing)
-    } while (mineralProcessing.amount === 5)
-    
-    //process Emerald
-    do {
-        mineralProcessing = SkopeManager.process("Emerald")
-        processedEmerald.push(mineralProcessing)
-    } while (mineralProcessing.amount === 5)
-
-
-console.log("Onyx", processedOnyx)
-console.log("Amethyst", processedAmethyst)
-console.log("Bloodstone", processedBloodstone)
-console.log("Emerald", processedEmerald)
-
+    SkopeManager.products.forEach(
+        mineral => {
+            let mineralProcessing = null
+            do {
+                mineralProcessing = SkopeManager.process(mineral) //the mineral currently being processed
+                if(mineralProcessing.amount > 0) {
+                    processedGems.push(mineralProcessing) //if amount greater than 0 then add to processedGems array
+                }
+            } while (mineralProcessing.amount === 5) //only process when you are able to process 5 gems at a time
+        }
+    )
 
 // /*
 // Create a generator for 30 storage containers, which is how many a hëap-skope is equipped with.
 // */
     const gemContainerGenerator = function* () {
-        let currentContainer = 1
+        let currentContainerId = 1
         const maximumContainers = 30
 
-        while (currentContainer <= maximumContainers) {
-            yield { "id": currentContainer, "type": "Mineral", "orders": [] }
-            currentContainer++
+        while (currentContainerId <= maximumContainers) {
+            yield { "id": currentContainerId, "type": "Mineral", "orders": [] }
+            currentContainerId++
         }
     }
     //instance of gem container generator
@@ -122,4 +103,25 @@ console.log("Emerald", processedEmerald)
     const gemContainers = []
     
     //current container
-    const currentContainer = gemContainerFactory.next().value
+    let currentContainer = gemContainerFactory.next().value
+
+    //iterate over the processed gems array and put the gems in the containers
+    processedGems.forEach(
+        currentGem => {
+            if(currentGem) {
+                currentContainer.orders.push(currentGem) //adds current gem to the orders array of the current container
+                let containerCapacity = 565/(currentContainer.orders.length * 5) //divides the maximum capcity by the current amount in the container given that each order has 5 gems
+
+                if(containerCapacity === 1) { //when the container is full, add the container to the gemContainers array and start a new container
+                gemContainers.push(currentContainer)
+                currentContainer = gemContainerFactory.next().value
+                }
+            }
+        }
+    )
+
+    if(currentContainer.orders.length > 0) { //even if the container isn't full, add it to the gemContainers array
+        gemContainers.push(currentContainer)
+    }
+
+    console.log(gemContainers)
